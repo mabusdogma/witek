@@ -1,3 +1,5 @@
+#! /usr/bin/env python3
+
 import os
 import pandas as pd
 import openpyxl
@@ -11,15 +13,18 @@ warnings.simplefilter("ignore")
 print ("\nEste script copia un archivo de Excel a solo valores, para procesar rápidamente")
 print("Por favor, arrastre hasta aqui el archivo o escriba la ruta completa")
 print('Ejemplo:', r'C:\Users...')
-previo = input('\n\n')
+origen = input('\n\n')
 
-#si se arrastra archivo, quitar las comillas al inicio y al final
-origen = previo.replace('"', '')
+#si se arrastra archivo desde Windows, quitar las comillas al inicio y al final
+origen = origen.replace('"', '')
+
+#si se arrastra archivo desde WSL, truncar la parte inicial de la dirección y cambiar las barras
+if origen.find(r'wsl'):
+    origen = origen.replace(r'\\wsl.localhost\Ubuntu', '')
+    origen = origen.replace('\\', '/')
 
 #concatena ruta y muestra nombre del archivo destino
 destino = str(os.path.splitext(origen)[0]) + 'v' + str(os.path.splitext(origen)[1])       
-print ("\nArchivo destino: ")
-print (destino)
 print('')
 
 #tiempo desde donde se cuenta la conversion
@@ -41,7 +46,6 @@ wb.save(destino)
 
 #rellenar hoja por hoja en destino, solo valores
 actual=1
-print('Progreso (hojas):')
 
 with pd.ExcelWriter(destino, mode="a", engine="openpyxl", if_sheet_exists="replace") as writer:
     for sheet in sheets:
