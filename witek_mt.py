@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import os
 import pandas as pd
 import openpyxl
@@ -7,21 +9,27 @@ import warnings
 
 #desactiva advertencias
 warnings.simplefilter("ignore")
+
 #archivos de origen y destino, destino lleva una v detras del nombre
 print ("\nEste script copia un archivo de Excel a solo valores, para procesar rápidamente")
 print("Por favor, arrastre hasta aqui el archivo o escriba la ruta completa")
 print('Ejemplo:', r'C:\Users...')
-previo = input('\n\n')
-startTime = time.time()
+origen = input('\n\n')
 
-#si se arrastra archivo, quitar las comillas al inicio y al final
-origen = previo.replace('"', '')
- 
+#si se arrastra archivo desde Windows, quitar las comillas al inicio y al final
+origen = origen.replace('"', '')
+
+#si se arrastra archivo desde WSL, truncar la parte inicial de la dirección y cambiar las barras
+if origen.find(r'wsl'):
+    origen = origen.replace(r'\\wsl.localhost\Ubuntu', '')
+    origen = origen.replace('\\', '/')
+
 #concatena ruta y muestra nombre del archivo destino
 destino = str(os.path.splitext(origen)[0]) + 'v' + str(os.path.splitext(origen)[1])       
-print ("\nArchivo destino: ")
-print (destino)
 print('')
+
+#tiempo desde donde se cuenta la conversion
+startTime = time.time()
 
 #abre archivo origen y asigna variable las hojas
 xl = pd.read_excel(origen, header=None, index_col=None, sheet_name=None)
@@ -38,7 +46,6 @@ ws.title = res.sheet_names[0]
 wb.save(destino)   
 
 #rellenar hoja por hoja en destino, solo valores
-print('Espere...')
 with pd.ExcelWriter(destino, mode="a", engine="openpyxl", if_sheet_exists="replace") as writer:
     with concurrent.futures.ThreadPoolExecutor() as executor:
         #crea o reemplaza la hoja en destino
