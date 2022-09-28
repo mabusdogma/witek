@@ -1,5 +1,5 @@
 # witek
-Create a COPY of Excel files to values-only.
+Creates a COPY of Excel files to values-only.
 
 Crea una COPIA de archivos de Excel a solo valores (menor tamaño de archivo, se trabaja más facilmente).
 La copia se generará en la misma carpeta, con el mismo nombre y una 'v' antes de la extension (se puede buscar con *v.xls o *v.xlsx dependiendo del formato).
