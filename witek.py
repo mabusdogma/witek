@@ -16,13 +16,15 @@ print('Ejemplo:', r'C:\Users...')
 origen = input('\n\n')
 
 #si se arrastra archivo desde Windows, quitar las comillas al inicio y al final
-origen = origen.replace('"', '')
-
-#si se arrastra archivo desde WSL, truncar la parte inicial de la dirección y cambiar las barras
-if origen.find(r'wsl'):
+if os.name == 'nt':
+    origen = origen.replace('"', '')
+    import win32api,win32process,win32con
+    win32process.SetPriorityClass(win32api.GetCurrentProcess(), win32process.HIGH_PRIORITY_CLASS)
+else:
     origen = origen.replace(r'\\wsl.localhost\Ubuntu', '')
     origen = origen.replace('\\', '/')
-
+    os.nice(-18)
+    
 #concatena ruta y muestra nombre del archivo destino
 destino = str(os.path.splitext(origen)[0]) + 'v' + str(os.path.splitext(origen)[1])       
 print('')
@@ -32,23 +34,20 @@ startTime = time.time()
 
 #abre archivo origen y asigna variable las hojas
 xl = pd.read_excel(origen, header=None, index_col=None, sheet_name=None)
-sheets = xl.keys()
-
+sheets = list(xl.keys())
 #calcula cuantas hojas lleva y cuantas en total
-res = pd.ExcelFile(origen)
-total = len(res.sheet_names)
+total = len(sheets)
 
-#crea archivo destino y cambiando el nombre de la primera hoja por defecto (Sheet)
-wb = openpyxl.Workbook()
-ws = wb.active
-ws.title = res.sheet_names[0]
-wb.save(destino)   
-
-#rellenar hoja por hoja en destino, solo valores
+#crea archivo destino y primera hoja
+sheet = sheets[0]
+xl[sheet].to_excel(destino, engine="xlsxwriter", sheet_name=sheet, index=False, header=False)
+itersheets = iter(sheets)
+next(itersheets)
 actual=1
 
+#crea de la hoja 2 en delante
 with pd.ExcelWriter(destino, mode="a", engine="openpyxl", if_sheet_exists="replace") as writer:
-    for sheet in sheets:
+    for sheet in itersheets:
         #crea barra de progreso
         print("\r[", actual, "/", total, "]", end='\r')  
         #crea o reemplaza la hoja en destino

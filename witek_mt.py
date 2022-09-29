@@ -17,13 +17,15 @@ print('Ejemplo:', r'C:\Users...')
 origen = input('\n\n')
 
 #si se arrastra archivo desde Windows, quitar las comillas al inicio y al final
-origen = origen.replace('"', '')
-
-#si se arrastra archivo desde WSL, truncar la parte inicial de la dirección y cambiar las barras
-if origen.find(r'wsl'):
+if os.name == 'nt':
+    origen = origen.replace('"', '')
+    import win32api,win32process,win32con
+    win32process.SetPriorityClass(win32api.GetCurrentProcess(), win32process.HIGH_PRIORITY_CLASS) 
+else:
     origen = origen.replace(r'\\wsl.localhost\Ubuntu', '')
     origen = origen.replace('\\', '/')
-
+    os.nice(-18)
+    
 #concatena ruta y muestra nombre del archivo destino
 destino = str(os.path.splitext(origen)[0]) + 'v' + str(os.path.splitext(origen)[1])       
 print('')
@@ -37,19 +39,19 @@ sheets = xl.keys()
 
 #calcula cuantas hojas lleva y cuantas en total
 res = pd.ExcelFile(origen)
-total = len(res.sheet_names)
 
-#crea archivo destino y cambiando el nombre de la primera hoja por defecto (Sheet)
-wb = openpyxl.Workbook()
-ws = wb.active
-ws.title = res.sheet_names[0]
-wb.save(destino)   
+#crea archivo destino y primera hoja
+sheet = res.sheet_names[0]
+xl[sheet].to_excel(destino, engine="xlsxwriter", sheet_name=sheet, index=False, header=False)
+itersheets = iter(sheets)
+next(itersheets)  
 
 #rellenar hoja por hoja en destino, solo valores
 with pd.ExcelWriter(destino, mode="a", engine="openpyxl", if_sheet_exists="replace") as writer:
     with concurrent.futures.ThreadPoolExecutor() as executor:
         #crea o reemplaza la hoja en destino
-        futures = [executor.submit(xl[sheet].to_excel(writer, sheet_name=sheet, index=False, header=False)) for sheet in sheets]      
+        futures = [executor.submit(xl[sheet].to_excel(writer, sheet_name=sheet, index=False, header=False)) 
+                   for sheet in itersheets]    
 
 #finalizar     
 print('Archivo copiado correctamente!\n')
