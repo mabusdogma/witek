@@ -37,12 +37,12 @@ startTime = time.time()
 xl = pd.read_excel(origen, header=None, index_col=None, sheet_name=None)
 sheets = xl.keys()
 
-#calcula cuantas hojas lleva y cuantas en total
+#calcula numero de hojas
 res = pd.ExcelFile(origen)
 
 #crea archivo destino y primera hoja
 sheet = res.sheet_names[0]
-xl[sheet].to_excel(destino, engine="xlsxwriter", sheet_name=sheet, index=False, header=False)
+xl[sheet].to_excel(destino, engine="openpyxl", sheet_name=sheet, index=False, header=False)
 itersheets = iter(sheets)
 next(itersheets)  
 
